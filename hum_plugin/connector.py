@@ -198,39 +198,67 @@ def clear_session_override(profile_home: str) -> bool:
     return changed
 
 
-def restart_profile(profile_id: str) -> Tuple[bool, str]:
-    """Перезапустить gateway профиля. Профиль без gateway — сообщение, а не ошибка."""
-    home = Path(hermes_home())
-    if profile_id != "default":
-        home = profiles_root() / profile_id
-    if profile_id == "default" and home.parent.name == "profiles":
-        home = profiles_root().parent
+def restart_profile(profile_id: str, wait_s: int = 90) -> Tuple[bool, str]:
+    """Перезапустить gateway профиля. Профиль без запущенного gateway — сообщение, не ошибка.
 
+    Важно: ``hermes gateway restart`` — процесс, который после рестарта ОСТАЁТСЯ ЖИТЬ
+    сам и становится gateway. Ждать его завершения нельзя: он не завершится, пока
+    работает. Поэтому запускаем его отдельной сессией и ждём готовности по процессу.
+    """
     cmd = ["hermes", "gateway", "restart"]
     if profile_id != "default":
         cmd += ["--profile", profile_id]
+
+    logs_dir = Path(hermes_home()) / "logs"
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        log = open(logs_dir / "hum-restart.log", "a", encoding="utf-8")
+    except Exception:
+        log = subprocess.DEVNULL  # type: ignore[assignment]
+
+    try:
+        proc = subprocess.Popen(
+            cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+            start_new_session=True,  # отделяемся от процесса-группы веб-сервиса
+        )
     except FileNotFoundError:
         return False, "Команда hermes не найдена в PATH"
-    except subprocess.TimeoutExpired:
-        return False, "Рестарт не ответил за 180 секунд"
+    except Exception as exc:
+        return False, f"Не удалось запустить рестарт: {exc}"
 
-    output = (proc.stdout or "") + (proc.stderr or "")
-    ok = proc.returncode == 0
-    tail = " ".join(output.split())[-300:]
-    return ok, tail or f"код возврата {proc.returncode}"
+    # Ждём не завершения процесса (он не завершится), а появления gateway.
+    deadline = time.time() + wait_s
+    while time.time() < deadline:
+        time.sleep(2)
+        if proc.poll() is not None:
+            return False, f"Рестарт завершился с кодом {proc.returncode}, см. logs/hum-restart.log"
+        if gateway_running(profile_id):
+            return True, "gateway запущен"
+    return False, f"Gateway не поднялся за {wait_s} с, см. logs/hum-restart.log"
 
 
 def gateway_running(profile_id: str) -> Optional[bool]:
-    """Запущен ли gateway профиля. None — определить не удалось."""
+    """Запущен ли gateway профиля. None — определить не удалось.
+
+    Важно: pgrep по строке ``--profile <id>`` находит и нашу собственную команду,
+    поэтому процессы с текущим pid и его родителем отбрасываются — иначе профиль
+    всегда считался бы запущенным.
+    """
     try:
-        args = ["pgrep", "-af", "hermes"]
-        out = subprocess.run(args, capture_output=True, text=True, timeout=10).stdout
+        out = subprocess.run(["pgrep", "-af", "hermes"], capture_output=True,
+                             text=True, timeout=10).stdout
     except Exception:
         return None
+    me = {os.getpid(), os.getppid()}
     needle = f"--profile {profile_id}" if profile_id != "default" else "hermes gateway"
     for line in out.splitlines():
-        if "gateway" in line and needle in line:
+        pid_str, _, cmd = line.partition(" ")
+        if not cmd.startswith("hermes") and "hermes" not in cmd.split(" ")[0]:
+            continue
+        if "gateway" not in cmd:
+            continue
+        if not pid_str.isdigit() or int(pid_str) in me:
+            continue
+        if needle in cmd:
             return True
     return False
