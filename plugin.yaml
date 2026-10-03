@@ -1,0 +1,15 @@
+name: hum
+version: 0.1.0
+description: "Веб-интерфейс каталога моделей UnoRouter с подключением выбранной модели к любому профилю Hermes агента. Каталог повторяет unorouter.com, кнопка «Подключить» пишет модель в config.yaml профиля и перезапускает его gateway."
+author: "Staxan"
+kind: backend
+platforms:
+  - linux
+  - macos
+requires_env:
+  - UNOROUTER_API_KEY
+python_dependencies: []
+provides_tools:
+  - hum_models
+  - hum_connect
+  - hum_status

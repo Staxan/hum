@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hum — каталог моделей UnoRouter</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">hum</span>
+    <div>
+      <h1>Каталог моделей UnoRouter</h1>
+      <p class="sub" id="sub">Загрузка каталога…</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button id="btn-refresh" class="btn">Обновить данные</button>
+    <button id="btn-checkall" class="btn">Проверить все бесплатные</button>
+  </div>
+</header>
+
+<section class="filters">
+  <div class="f-row">
+    <input id="q" type="search" placeholder="Поиск по модели или провайдеру…" autocomplete="off">
+    <div class="chips" id="chips-type">
+      <span class="chips-label">Модальность</span>
+      <button class="chip active" data-val="">Все</button>
+      <button class="chip" data-val="text">Текст</button>
+      <button class="chip" data-val="image">Изображение</button>
+      <button class="chip" data-val="audio">Аудио</button>
+      <button class="chip" data-val="video">Видео</button>
+      <button class="chip" data-val="embedding">Эмбеддинги</button>
+    </div>
+  </div>
+
+  <div class="f-row">
+    <div class="chips" id="chips-price">
+      <span class="chips-label">Цена</span>
+      <button class="chip active" data-val="all">Все</button>
+      <button class="chip" data-val="free">Бесплатные</button>
+      <button class="chip" data-val="paid">Платные</button>
+    </div>
+    <label class="inline">Контекст от
+      <input id="ctx" type="number" placeholder="любой" min="0" step="128000"> токенов
+    </label>
+    <label class="inline">Цена ввода до
+      <input id="price-in" type="number" placeholder="$" min="0" step="0.5"> $
+    </label>
+    <label class="inline">Цена вывода до
+      <input id="price-out" type="number" placeholder="$" min="0" step="0.5"> $
+    </label>
+  </div>
+
+  <div class="f-row">
+    <div class="chips" id="chips-tool">
+      <span class="chips-label">Инструменты</span>
+      <button class="chip" data-val="tools">Вызов функций</button>
+      <button class="chip" data-val="vision">Зрение</button>
+      <button class="chip" data-val="reasoning">Рассуждения</button>
+      <button class="chip" data-val="cache">Кэш</button>
+      <button class="chip" data-val="online">Только доступные</button>
+    </div>
+    <select id="vendor"><option value="">Все провайдеры</option></select>
+    <select id="sort">
+      <option value="vendor">Сортировка: провайдер</option>
+      <option value="name">Сортировка: имя</option>
+      <option value="ctx-desc">Контекст: по убыванию</option>
+      <option value="in-asc">Цена ввода: по возрастанию</option>
+      <option value="out-asc">Цена вывода: по возрастанию</option>
+      <option value="lat-asc">Задержка: по возрастанию</option>
+    </select>
+  </div>
+
+  <div class="f-row head-actions">
+    <label class="inline"><input type="checkbox" id="only-fav"> Только избранное</label>
+    <span class="counter" id="counter"></span>
+  </div>
+</section>
+
+<main>
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th class="c-fav" title="Избранное">★</th>
+        <th data-sort="name">Модель</th>
+        <th data-sort="vendor">Провайдер</th>
+        <th data-sort="in-asc">Ввод</th>
+        <th data-sort="out-asc">Вывод</th>
+        <th data-sort="ctx-desc">Контекст</th>
+        <th>Доступность</th>
+        <th data-sort="succ-desc">Успешность</th>
+        <th data-sort="lat-asc">Задержка</th>
+        <th data-sort="rel-desc">Выпущено</th>
+        <th class="c-act">Действия</th>
+      </tr>
+    </thead>
+    <tbody id="body"></tbody>
+  </table>
+  <div id="empty" class="empty" hidden>Ничего не найдено</div>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
