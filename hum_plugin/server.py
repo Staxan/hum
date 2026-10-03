@@ -1,7 +1,7 @@
 """HTTP-сервер плагина hum: JSON API + статика веб-интерфейса.
 
 Только стандартная библиотека — чтобы установка была одной командой без pip-зависимостей.
-Слушает 127.0.0.1:8647.
+Слушает 127.0.0.1:8780.
 """
 
 from __future__ import annotations
@@ -19,7 +19,9 @@ from . import catalog, connector, favorites
 from .model_check import probe_model
 
 HOST = "127.0.0.1"
-PORT = int(os.environ.get("HUM_PORT", "8647"))
+# Порт по умолчанию — 8780. НЕ используем диапазон 8644-8648: его целиком занимают
+# служебные порты Hermes (webhook, line, gateway-профили), и плагин получил бы чужой сокет.
+PORT = int(os.environ.get("HUM_PORT", "8780"))
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 

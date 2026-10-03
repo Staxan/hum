@@ -5,7 +5,9 @@ const state = {
   models: [],
   agents: [],
   favs: new Set(),
-  filters: { type: '', price: 'all', ctx: 0, pin: 0, pout: 0, tools: new Set(), vendor: '', q: '' },
+  // pin/pout — пустая строка, а не 0: условие фильтра «!== ''» отсеивает всё,
+  // у чего цена выше 0, и при стартовом 0 в таблице оставались только бесплатные.
+  filters: { type: '', price: 'all', ctx: 0, pin: '', pout: '', tools: new Set(), vendor: '', q: '' },
   sort: 'vendor',
   onlyFav: false,
 };
@@ -280,8 +282,16 @@ function openDropdown(btn, modelId) {
 /* ── фильтры ───────────────────────────────────────────────────────── */
 $('#q').addEventListener('input', (e) => { state.filters.q = e.target.value; render(); });
 $('#ctx').addEventListener('input', (e) => { state.filters.ctx = Number(e.target.value) || 0; render(); });
-$('#price-in').addEventListener('input', (e) => { state.filters.pin = e.target.value === '' ? '' : Number(e.target.value); render(); });
-$('#price-out').addEventListener('input', (e) => { state.filters.pout = e.target.value === '' ? '' : Number(e.target.value); render(); });
+$('#price-in').addEventListener('input', (e) => {
+  const v = e.target.value.trim();
+  state.filters.pin = v === '' ? '' : Number(v);
+  render();
+});
+$('#price-out').addEventListener('input', (e) => {
+  const v = e.target.value.trim();
+  state.filters.pout = v === '' ? '' : Number(v);
+  render();
+});
 $('#vendor').addEventListener('change', (e) => { state.filters.vendor = e.target.value; render(); });
 $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
 $('#only-fav').addEventListener('change', (e) => { state.onlyFav = e.target.checked; render(); });
