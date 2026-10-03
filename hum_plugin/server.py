@@ -30,6 +30,19 @@ _CATALOG_CACHE: Dict[str, Any] = {"at": 0.0, "data": None}
 _CATALOG_TTL = 300.0
 _CATALOG_LOCK = threading.Lock()
 
+# MIME по расширению. Раньше всё, кроме .html, отдавалось как application/octet-stream,
+# и браузер отказывался применять style.css — страница выходила совсем без стилей.
+_MIME_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".png": "image/png",
+    ".woff2": "font/woff2",
+}
+
 
 def api_key() -> str:
     """Ключ UnoRouter: сперва переменная профиля, затем его config.yaml."""
@@ -91,11 +104,14 @@ class Handler(BaseHTTPRequestHandler):
         if not str(path).startswith(str(WEB_DIR.resolve())) or not path.is_file():
             self.send_error(404)
             return
-        ctype = "text/html; charset=utf-8" if path.suffix == ".html" else "application/octet-stream"
+        ctype = _MIME_TYPES.get(path.suffix, "application/octet-stream")
         body = path.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        # Стили и скрипты меняются при обновлении плагина — запрещаем кэш,
+        # иначе браузер продолжит держать старую версию файла.
+        self.send_header("Cache-Control", "no-store, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
 
