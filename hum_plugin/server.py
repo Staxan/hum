@@ -105,6 +105,12 @@ class Handler(BaseHTTPRequestHandler):
 
         if route in ("/", "/index.html"):
             return self._send_file("index.html")
+        if route in ("/style.css", "/app.js"):
+            return self._send_file(route.lstrip("/"))
+        if route == "/favicon.ico":
+            self.send_response(204)
+            self.end_headers()
+            return
         if route == "/api/catalog":
             data = get_catalog(force=query.get("refresh", ["0"])[0] == "1")
             favs = set(favorites.list_favorites())

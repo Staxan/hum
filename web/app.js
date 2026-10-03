@@ -53,7 +53,12 @@ async function loadCatalog(refresh) {
   const sub = $('#sub');
   sub.textContent = refresh ? 'Обновляю цены и доступность…' : 'Загружаю каталог…';
   try {
-    const r = await fetch('/api/catalog' + (refresh ? '?refresh=1' : ''));
+    // Каталог собирается из двух источников (страница + API) — это 20-30 секунд,
+    // поэтому таймаут заведомо больше: обрыв на середине выглядит как пустой каталог.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 180000);
+    const r = await fetch('/api/catalog' + (refresh ? '?refresh=1' : ''), { signal: ctrl.signal });
+    clearTimeout(timer);
     const data = await r.json();
     state.models = data.models || [];
     state.favs = new Set(data.favorites || []);
