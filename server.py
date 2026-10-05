@@ -23,7 +23,8 @@ HOST = "127.0.0.1"
 # служебные порты Hermes (webhook, line, gateway-профили), и плагин получил бы чужой сокет.
 PORT = int(os.environ.get("HUM_PORT", "8780"))
 
-WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+# После установки файлы плагина находятся в его корне, рядом с каталогом web/.
+WEB_DIR = Path(__file__).resolve().parent / "web"
 
 # Кэш каталога: цены у UnoRouter обновляются редко, а страница тяжёлая.
 _CATALOG_CACHE: Dict[str, Any] = {"at": 0.0, "data": None}
